@@ -1,0 +1,84 @@
+{% extends 'base_detail_list.html' %}
+{% block title %}天天生鲜-商品搜索结果列表{% endblock title %}
+{% load static %}
+
+{# 网页顶部搜索框块 #}
+{% block search_bar %}
+    <div class="search_bar clearfix">
+        <a href="{% url 'goods:index' %}" class="logo fl"><img src="{% static 'images/logo.png' %}"></a>
+        <div class="search_con fl">
+            <form method="get" action="/search">
+                <input type="text" class="input_text fl" name="q" placeholder="搜索商品">
+                <input type="submit" class="input_btn fr" name="" value="搜索">
+            </form>
+        </div>
+    </div>
+{% endblock search_bar %}
+
+{% block body %}
+    {% block main_content %}
+        <div class="breadcrumb">
+            <a href="#">{{ query }}</a>
+            <span>></span>
+            <a href="#">搜索结果如下:</a>
+        </div>
+
+        <div class="main_wrap clearfix">
+            <ul class="goods_type_list clearfix">
+                {% for item in page %}
+                    <li>
+                        <a href="{% url 'goods:detail' item.object.id %}"><img src="{{ item.object.image.url }}"></a>
+                        <h4><a href="{% url 'goods:detail' item.object.id %}">{{ item.object.name }}</a></h4>
+                        <div class="operate">
+                            <span class="prize">￥{{ item.object.price }}</span>
+                            <span class="unit">{{ item.object.price }}/{{ item.object.unite }}</span>
+                            <a href="#" sku_id="{{ item.object.id }}" class="add_goods" title="加入购物车"></a>
+                            {% csrf_token %}
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+            <div class="pagenation">
+                {% if page.has_previous %}
+                    <a href="/search?q={{ query }}&page={{ page.previous_page_number }}">&lt;上一页</a>
+                {% endif %}
+                {% for pindex in paginator.page_range %}
+                    {% if pindex == page.number %}
+                        <a href="/search?q={{ query }}&page={{ pindex }}" class="active">{{ pindex }}</a>
+                    {% else %}
+                        <a href="/search?q={{ query }}&page={{ pindex }}">{{ pindex }}</a>
+                    {% endif %}
+                {% endfor %}
+                {% if spage.has_next %}
+                    <a href="/search?q={{ query }}&page={{ page.next_page_number }}">下一页&gt;</a>
+                {% endif %}
+            </div>
+        </div>
+    {% endblock main_content %}
+{% endblock body %}
+{% block bottom %}
+    <div class="add_jump"></div>
+{% endblock bottom %}
+{% block bottomfiles %}
+    <script type="text/javascript" src="{% static 'js/jquery-1.12.4.min.js' %}"></script>
+    <script type="text/javascript">
+        $('a.add_goods').click(function () {
+            // 获取商品id和商品数量
+            sku_id = $(this).attr('sku_id') // attr prop
+            count = 1
+            csrf = $('input[name="csrfmiddlewaretoken"]').val()
+            // 组织参数
+            params = {'sku_id': sku_id, 'count': count, 'csrfmiddlewaretoken': csrf}
+            // 发起ajax post请求，访问/cart/add, 传递参数:sku_id count
+            $.post('/cart/add', params, function (data) {
+                if (data.res == 0) {
+                    // 添加成功
+                    alert("添加成功");
+                } else {
+                    // 添加失败
+                    alert(data.errmsg)
+                }
+            })
+        });
+    </script>
+{% endblock bottomfiles %}
